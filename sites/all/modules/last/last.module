@@ -1,0 +1,103 @@
+<?php
+// $Id: last.module
+ 
+ 
+ 
+/**
+ * Implements hook_block_info.
+ */
+function last_block_info() {
+  $blocks['last'] = array('info' => t('Last News block'));
+  return $blocks;
+}
+
+
+
+/**
+ * Implements hook_block_view.
+ */
+function last_block_view($delta = '') {
+  
+  $block['content'] = "";
+   
+  $block['subject'] = "My Latest News";
+  
+  
+   /* Drupal 7 query */
+	$query = db_select('node', 'n');
+	$query->condition('n.type', 'article', '=')
+		  ->fields('n', array('nid', 'title', 'uid'))
+		  ->range(0, 3);
+	$result = $query->execute();
+	
+	foreach ($result as $row) {
+	 
+	  // Do something with each $record
+	  $options = array('absolute' => TRUE);
+      $url = url('node/' . $row->nid, $options);
+	  $items[] = array(
+      'data' => t("<a href=$url>$row->title</a>")
+      );
+	}
+   
+  
+    $block['content'] .= theme('item_list', array(
+      'items' => $items, 
+	  'type' => 'ol'
+    ));
+  
+    return $block;
+}
+
+ 
+/**
+ * implements hook_menu()
+ */
+function last_menu(){	
+	$items  = array();
+	$items['last'] = array(
+		'title' => "Last News",
+		'page callback' => "last_personal_info", // after visit drupal6/person, person_personal_info() function is called
+		'access callback' => true,	// must return true, otherwise it will not visible as menu item
+		'type' => MENU_NORMAL_ITEM, // drupal's default menu type	
+		'weight' => '10', // we want to display person link below in our nav menu
+	);		
+  	return $items; // finally, do not forget to return $items array
+}
+
+
+/**
+ * callback function for person
+ *
+ */
+function last_personal_info(){
+	
+	// Query all of the nids of a particular content type.
+    $nids = db_select('node', 'n')
+    ->fields('n', array('nid'))
+    ->condition('type', 'article', '=')
+    ->execute()
+    ->fetchCol();
+  
+    // Get all of the article nodes.
+    $nodes = node_load_multiple($nids);
+	
+		foreach ($nodes as $node) : 
+			$field_image = field_get_items('node', $node, 'field_image'); 
+			$options = array('absolute' => TRUE);
+			$url = url('node/' . $node->nid, $options);
+			$pic=theme('image_style', array('style_name' => 'thumbnail', 'path' => $field_image[0]['uri']));
+			$sum=$node->body['und'][0]['summary'];
+			$items[] = array(
+			  'data' => t("<a href=$url>$node->title</a><br />$pic<br />$sum")
+			  );
+		endforeach;
+  
+    $output = theme('item_list', array(
+      'items' => $items
+    ));
+  
+	return $output;
+}
+
+?>

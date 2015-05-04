@@ -1,0 +1,6 @@
+; $Id $
+name = last
+description = Last News By Amine
+core = 7.x
+package = "Lasts News module"
+php = 5.5.12
