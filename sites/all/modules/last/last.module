@@ -1,8 +1,6 @@
 <?php
 // $Id: last.module
  
- 
- 
 /**
  * Implements hook_block_info.
  */
@@ -10,7 +8,6 @@ function last_block_info() {
   $blocks['last'] = array('info' => t('Last News block'));
   return $blocks;
 }
-
 
 
 /**
@@ -30,6 +27,7 @@ function last_block_view($delta = '') {
 		  ->range(0, 3);
 	$result = $query->execute();
 	
+	/*
 	foreach ($result as $row) {
 	 
 	  // Do something with each $record
@@ -39,16 +37,36 @@ function last_block_view($delta = '') {
       'data' => t("<a href=$url>$row->title</a>")
       );
 	}
+	*/
    
   
-    $block['content'] .= theme('item_list', array(
+    /*$block['content'] .= theme('item_list', array(
       'items' => $items, 
 	  'type' => 'ol'
-    ));
+    ));*/
+	
+	
+	$vars = array();
+    $vars['my_block'] = $result;   
+	 
+	$block['content'] = theme('my_block_last', $vars);
   
     return $block;
 }
 
+ 
+/**
+ * Implements hook_permission.
+ */
+function last_permission() {
+  return array(
+    'last module' => array(
+      'title' => t('Last News module permission'),
+	  'restrict access' => TRUE,
+  ));
+} 
+ 
+ 
  
 /**
  * implements hook_menu()
@@ -58,13 +76,23 @@ function last_menu(){
 	$items['last'] = array(
 		'title' => "Last News",
 		'page callback' => "last_personal_info", // after visit drupal6/person, person_personal_info() function is called
-		'access callback' => true,	// must return true, otherwise it will not visible as menu item
+		'access arguments' => array('last module'),
+        //'access callback' => true,	// must return true, otherwise it will not visible as menu item
 		'type' => MENU_NORMAL_ITEM, // drupal's default menu type	
 		'weight' => '10', // we want to display person link below in our nav menu
 	);		
   	return $items; // finally, do not forget to return $items array
 }
 
+/**
+ * Implements hook_help.
+ */
+function last_help($path, $arg) {
+  if ($path == 'admin/help#last') {
+   return '<h1>' . t('Custom module help page') . '</h1>' .
+            '<p>' . t('Module description...') . '</p>';
+  }
+}
 
 /**
  * callback function for person
@@ -82,7 +110,7 @@ function last_personal_info(){
     // Get all of the article nodes.
     $nodes = node_load_multiple($nids);
 	
-		foreach ($nodes as $node) : 
+		/*foreach ($nodes as $node) : 
 			$field_image = field_get_items('node', $node, 'field_image'); 
 			$options = array('absolute' => TRUE);
 			$url = url('node/' . $node->nid, $options);
@@ -91,13 +119,38 @@ function last_personal_info(){
 			$items[] = array(
 			  'data' => t("<a href=$url>$node->title</a><br />$pic<br />$sum")
 			  );
-		endforeach;
+		endforeach;*/
   
-    $output = theme('item_list', array(
+    /*$output = theme('item_list', array(
       'items' => $items
-    ));
+    ));*/
+	
+			  
+	
+    $vars = array();
+    $vars['my_var'] = $nodes;   
+	
+	$output = theme('my_template', $vars); 
   
 	return $output;
+}
+
+
+function last_theme($existing, $type, $theme, $path){
+    return array(
+        'my_template' => array(
+            'template' => 'my-template',
+            'variables' => array(
+                'my_var' => NULL,
+            ),
+        ),
+		'my_block_last' => array(
+            'template' => 'my-block',
+            'variables' => array(
+                'my_block' => NULL,
+            ),
+        ),
+    );
 }
 
 ?>
