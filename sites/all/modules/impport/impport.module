@@ -111,6 +111,7 @@ function impport_import_batch_processing($data) {
   $nom = $data[0];
   $field_valeur = $data[1];
   $field_ref = $data[2];
+  $pictuure="C:\Users\amine\Downloads\messi.jpg";
   // Find out if the node already exists by looking up its serial number. Each serial number should be unique. You can use whatever you want.
   $nid = db_query("SELECT DISTINCT n.nid FROM {node} n " . 
     "INNER JOIN {field_data_field_ref} s ON s.revision_id = n.vid AND s.entity_id = n.nid " .
@@ -119,12 +120,30 @@ function impport_import_batch_processing($data) {
     ))->fetchField();
   if(!empty($nid)) {
     // The node exists! Load it.
+	 global $user;
     $node = node_load($nid);
  
     // Change the values. No need to update the serial number though.
     $node->title = $nom;
     $node->field_valeur['und'][0]['value'] = $field_valeur;
     $node->field_valeur['und'][0]['safe_value'] = check_plain($field_valeur);
+	
+	$file_path = drupal_realpath($pictuure);
+	$file = (object) array(
+				'uid' => $user->uid,
+				'uri' => $file_path,
+				'filemime' => file_get_mimetype($file_path),
+				'status' => 1,
+	);
+	
+	
+	// You can specify a subdirectory, e.g. public://foo/
+	$file = file_copy($file, 'public://foo/');
+	$node->field_pic[$node->language][0] = (array) $file;
+
+	
+	
+	
     node_save($node);
   }
   else {
@@ -138,9 +157,25 @@ function impport_import_batch_processing($data) {
     $node->field_valeur['und'][0]['value'] = $field_valeur;
     $node->field_valeur['und'][0]['safe_value'] = check_plain($field_valeur);
     $node->language = 'und';
- 
+    
     $node->field_ref['und'][0]['value'] = $field_ref;
     $node->field_ref['und'][0]['safe_value'] = check_plain($field_ref);
+	
+	
+	$file_path = drupal_realpath($pictuure);
+	$file = (object) array(
+				'uid' => $user->uid,
+				'uri' => $file_path,
+				'filemime' => file_get_mimetype($file_path),
+				'status' => 1,
+	);
+	
+	
+	// You can specify a subdirectory, e.g. public://foo/
+	$file = file_copy($file, 'public://foo/');
+	$node->field_pic[$node->language][0] = (array) $file;
+
+	
     node_save($node);
   }
 }
