@@ -108,10 +108,11 @@ function impport_import_form_submit($form, $form_state) {
 function impport_import_batch_processing($data) {
 	
   // Lets make the variables more readable.
+  $file_directorie='C:\Users\amine\Downloads';
   $nom = $data[0];
   $field_valeur = $data[1];
   $field_ref = $data[2];
-  $pictuure="C:\Users\amine\Downloads\messi.jpg";
+  $pictuure=$data[3];
   // Find out if the node already exists by looking up its serial number. Each serial number should be unique. You can use whatever you want.
   $nid = db_query("SELECT DISTINCT n.nid FROM {node} n " . 
     "INNER JOIN {field_data_field_ref} s ON s.revision_id = n.vid AND s.entity_id = n.nid " .
@@ -128,18 +129,27 @@ function impport_import_batch_processing($data) {
     $node->field_valeur['und'][0]['value'] = $field_valeur;
     $node->field_valeur['und'][0]['safe_value'] = check_plain($field_valeur);
 	
-	$file_path = drupal_realpath($pictuure);
-	$file = (object) array(
-				'uid' => $user->uid,
-				'uri' => $file_path,
-				'filemime' => file_get_mimetype($file_path),
-				'status' => 1,
+	//$file_name='Koala.jpg';
+	
+	$file_temp = file_get_contents($file_directorie.'\\'.$pictuure);
+
+	// Saves a file to the specified destination and creates a database entry.
+	$file_temp = file_save_data($file_temp, 'private://access/picture/' . $pictuure, FILE_EXISTS_RENAME);
+
+	$node->field_pic = array(
+	  'und' => array(
+		0 => array(
+		  'fid' => $file_temp->fid,
+		  'filename' => $file_temp->filename,
+		  'filemime' => $file_temp->filemime,
+		  'uid' => $user->uid,
+		  'uri' => $file_temp->uri,
+		  'status' => 1,
+		  'display' => 1
+		)
+	  )
 	);
 	
-	
-	// You can specify a subdirectory, e.g. public://foo/
-	$file = file_copy($file, 'public://foo/');
-	$node->field_pic[$node->language][0] = (array) $file;
 
 	
 	
@@ -162,19 +172,26 @@ function impport_import_batch_processing($data) {
     $node->field_ref['und'][0]['safe_value'] = check_plain($field_ref);
 	
 	
-	$file_path = drupal_realpath($pictuure);
-	$file = (object) array(
-				'uid' => $user->uid,
-				'uri' => $file_path,
-				'filemime' => file_get_mimetype($file_path),
-				'status' => 1,
+	//$file_name='Koala.jpg';
+    $file_temp = file_get_contents($file_directorie.'\\'.$pictuure);
+
+	// Saves a file to the specified destination and creates a database entry.
+	$file_temp = file_save_data($file_temp, 'private://access/picture/' . $pictuure, FILE_EXISTS_RENAME);
+
+	$node->field_pic = array(
+	  'und' => array(
+		0 => array(
+		  'fid' => $file_temp->fid,
+		  'filename' => $file_temp->filename,
+		  'filemime' => $file_temp->filemime,
+		  'uid' => $user->uid,
+		  'uri' => $file_temp->uri,
+		  'status' => 1,
+		  'display' => 1
+		)
+	  )
 	);
 	
-	
-	// You can specify a subdirectory, e.g. public://foo/
-	$file = file_copy($file, 'public://foo/');
-	$node->field_pic[$node->language][0] = (array) $file;
-
 	
     node_save($node);
   }
