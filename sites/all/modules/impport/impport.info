@@ -3,4 +3,6 @@ name = Import CSV
 description = Import CSV By Amine
 core = 7.x
 package = "Import module"
+configure = admin/config/impport
+
 php = 5.5.12
