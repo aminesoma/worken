@@ -58,33 +58,15 @@ function impport_list_form($form, &$form_state) {
 	  
       $form = array();
 		 
-		$form['filter'] = array(
-		  '#type' => 'fieldset',
-		  '#collapsible' => TRUE,
-		  '#collapsed' => FALSE,
-		  '#title' => t('Filter option')
-		);
-		$form['filter']['filter_nom'] = array(
-		  '#type' => 'select',
-		  '#title' => t('Seletionez'),
-		  '#options' => array('1'=>t('Nom'),'2'=>t('Valeur'),'3'=>t('All')),
-		  '#default_value' => 0,
-		);
-		/*$form['filter']['filter_quiz'] = array(
-		  '#type' => 'textfield',
-		  '#title' => t('Quiz title'),
-		  '#size' => 15,
-		);
-		$form['filter']['filter_group'] = array(
-		  '#type' => 'textfield',
-		  '#title' => t('Group name'),
-		  '#size' => 15,
-		);
-		$form['filter']['submit'] = array(
-		  '#type' => 'submit',
-		  '#value' => t('Filter'),
-		);
-		*/
+		$form['email'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Email'),
+    '#required' => TRUE,
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Subscribe'),
+  );
       	
 	// Query all of the nids of a particular content type.
     $nids = db_select('node', 'n')
@@ -111,7 +93,56 @@ function impport_list_form($form, &$form_state) {
   }
  
   
-  
+  /**
+ * Listserv Subscribe form validate handler.
+ */
+function impport_list_form_validate($form, &$form_state) {
+  $email = $form_state['values']['email'];
+  // Verify that the email address is valid.
+  if (!valid_email_address($email)) {
+    form_set_error('email', t('You must provide a valid email address.'));
+  }
+}
+
+/**
+ * Impliments hook_form_FORMID_alter.
+ */
+function impport_list_form_alter(&$form, &$form_state, $form_id) {
+  $form['submit']['#ajax'] = array(
+    'callback' => 'impport_list_subscribe_callback',
+    'wrapper' => 'listserv-subscribe-form',
+  );
+}
+
+/**
+ * Callback for heymp_form_listserv_subscribe_form_alter
+ */
+function impport_list_subscribe_callback($form, &$form_state) {
+  if (form_get_errors()) {
+    $form_state['rebuild'] = TRUE;
+  	$commands = array();
+  	//$commands[] = ajax_command_prepend(NULL, theme('status_messages')); 
+$commands[] = ajax_command_remove('div.messages');
+$commands[] = ajax_command_after('#main-content', theme('status_messages'));	
+    return array('#type' => 'ajax', '#commands' => $commands);
+  } 
+  else {
+    $system_message = drupal_get_messages();
+    return t('Thank you for your submission!');
+  }
+}
+
+
+
+
+
+/**
+ * Listserv Subscribe form submit handler.
+ */
+function impport_list_form_submit($form, &$form_state) {
+  $email = $form_state['values']['email'];
+ // listserv_listserv_subscription($email, 'subscribe');
+}
   
   function impport_theme($existing, $type, $theme, $path){
     return array(
