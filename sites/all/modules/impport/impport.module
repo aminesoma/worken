@@ -48,25 +48,44 @@ function impport_menu() {
 
 function impport_list_form($form, &$form_state) {
 	
-	
-	  $header = array(
+	$header = array(
 		array('data' => t('Nom'),'field' => 'title'),
 		array('data' => t('Valeur'),'field' => 'field_valeur'),
 		array('data' => t('ref'),'field' => 'field_ref'),
 	  );
 	  
 	  
-      $form = array();
+    $form = array();
 		 
-		$form['email'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Email'),
-    '#required' => TRUE,
-  );
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Subscribe'),
-  );
+		
+	// First we create a form element with AJAX enabled
+	$form['ajax_example'] = array
+	(
+		'#type' => 'select',
+		'#title' => t('Choisir un Filtre'),
+		// Note that I am setting the value and the display of the elements to be the same, for convenience sake in our callback function
+		'#options' => array(0 => t('Select something'), 1 => t('Show Nom'), 2 => t('Show Valeur'), 3 => t('Show Ref')),
+		'#prefix' => '<div id="after_ajax_element_wrapper">',
+		'#suffix' => '</div>',
+		'#ajax' => array
+		(
+			'callback' => 'after_ajax_ajax_callback',
+			'event' => 'change',
+		),
+	);
+ 
+	// Next we add our JavaScript file, named after_ajax.js. This file
+	// lives in the /js folder inside our module:
+	/*
+	$form['#attached']['js'] = array
+	(
+		array
+		(
+			'type'  => 'file',
+			'data' => drupal_get_path('module', 'impport') . '/js/after_ajax.js',
+		),
+	);
+	*/
       	
 	// Query all of the nids of a particular content type.
     $nids = db_select('node', 'n')
@@ -96,40 +115,93 @@ function impport_list_form($form, &$form_state) {
   /**
  * Listserv Subscribe form validate handler.
  */
-function impport_list_form_validate($form, &$form_state) {
+/*function impport_list_form_validate($form, &$form_state) {
   $email = $form_state['values']['email'];
   // Verify that the email address is valid.
   if (!valid_email_address($email)) {
     form_set_error('email', t('You must provide a valid email address.'));
   }
-}
+}*/
 
 /**
  * Impliments hook_form_FORMID_alter.
  */
-function impport_list_form_alter(&$form, &$form_state, $form_id) {
+/*function impport_list_form_alter(&$form, &$form_state, $form_id) {
   $form['submit']['#ajax'] = array(
     'callback' => 'impport_list_subscribe_callback',
     'wrapper' => 'listserv-subscribe-form',
   );
 }
+*/
 
 /**
  * Callback for heymp_form_listserv_subscribe_form_alter
  */
-function impport_list_subscribe_callback($form, &$form_state) {
-  if (form_get_errors()) {
-    $form_state['rebuild'] = TRUE;
-  	$commands = array();
-  	//$commands[] = ajax_command_prepend(NULL, theme('status_messages')); 
-$commands[] = ajax_command_remove('div.messages');
-$commands[] = ajax_command_after('#main-content', theme('status_messages'));	
-    return array('#type' => 'ajax', '#commands' => $commands);
-  } 
-  else {
-    $system_message = drupal_get_messages();
-    return t('Thank you for your submission!');
-  }
+function after_ajax_ajax_callback($form, &$form_state) {
+  // First, we initialize our $commands array. This array will
+	// contain each of the commands we want to fire for our
+	// #AJAX callback:
+ 	$commands = array();
+ 
+	// Next, we create our insert function that will insert our updated content
+	// back into the page. To do this, we use the system provided
+	// ajax_command_html() function. We pass this function two values:
+	// 1) Our AJAX wrapper (that we defined as the #prefix and #suffix of our form element)
+	// 2) The rendered HTML that needs to be inserted into the wrapper in the page.
+	$commands[] = ajax_command_html('#after_ajax_element_wrapper', render($form['ajax_example']));
+   
+    $commands[] = ajax_command_invoke('.hi1','show');
+	$commands[] = ajax_command_invoke('.hi2','show');
+	$commands[] = ajax_command_invoke('.hi3','show');
+	
+	if($form_state['values']['ajax_example']==1){
+			$commands[] = ajax_command_invoke('.hi2','hide');
+			$commands[] = ajax_command_invoke('.hi3','hide');
+			              
+	}
+	if($form_state['values']['ajax_example']==2){
+			$commands[] = ajax_command_invoke('.hi1','hide');
+			$commands[] = ajax_command_invoke('.hi3','hide');
+	}
+	if($form_state['values']['ajax_example']==3){
+			$commands[] = ajax_command_invoke('.hi1','hide');
+			$commands[] = ajax_command_invoke('.hi2','hide');
+	}
+	
+	//$commands[] = ajax_command_restripe('table');
+	/*
+	if($form_state['values']['ajax_example']==1){
+		    
+			$commands[] = ajax_command_remove('.hi2');
+			$commands[] = ajax_command_remove('.hi3');
+			              
+	}
+	if($form_state['values']['ajax_example']==2){
+			$commands[] = ajax_command_remove('.hi1');
+			$commands[] = ajax_command_remove('.hi2');
+	}
+	if($form_state['values']['ajax_example']==3){
+			$commands[] = ajax_command_remove('.hi1');
+			$commands[] = ajax_command_remove('.hi2');
+	}
+    */
+	// Next, we will use the system provided ajax_command_alert() function as an example to show it's
+	// working:
+	//$commands[] = ajax_command_alert(t($form_state['values']['ajax_example']));
+ 
+	// Next we will include a custom function that we will call ourselves in our JavaScript file:
+	/*
+	$commands[] = array
+	(
+		// The command will be used in our JavaScript file (see next section)
+		'command' => 'afterAjaxCallbackExample',
+		// We pass the value that the user selected in the select element to our
+		// JavaScript function:
+		'selectedValue' => $form_state['values']['ajax_example'],
+	);
+    */
+	// And finally, we will return all of our commands to the system to be executed:
+	return array('#type' => 'ajax', '#commands' => $commands);
 }
 
 
@@ -139,10 +211,10 @@ $commands[] = ajax_command_after('#main-content', theme('status_messages'));
 /**
  * Listserv Subscribe form submit handler.
  */
-function impport_list_form_submit($form, &$form_state) {
+/*function impport_list_form_submit($form, &$form_state) {
   $email = $form_state['values']['email'];
  // listserv_listserv_subscription($email, 'subscribe');
-}
+}*/
   
   function impport_theme($existing, $type, $theme, $path){
     return array(
@@ -302,7 +374,10 @@ function impport_import_batch_processing($data) {
   //$file_directorie='C:\Users\amine\Downloads';
   $file_directorie=variable_get('impport_configuration', 'C:\Users\amine\Downloads');
   $pathp=variable_get('impporti_configuration', 'access/picture/');
+  //Create the directory if it does not already exist, otherwise check the permissions
   $file_private='private://'.$pathp;
+  file_prepare_directory($file_private, FILE_CREATE_DIRECTORY);
+ 
   
   $nom = $data[0];
   $field_valeur = $data[1];
@@ -343,11 +418,7 @@ function impport_import_batch_processing($data) {
 		  'display' => 1
 		)
 	  )
-	);
-	
-
-	
-	
+	);	
 	
     node_save($node);
   }
